@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <string.h>
 #include <vector>
+#include <iostream>
 
 
 namespace sockets
@@ -93,29 +94,21 @@ namespace sockets
     }
 
     void ClientSocket::GetMessage(
-        std::vector<uint8_t>& msg
+        std::vector<uint8_t>& msg,
+        int& numBytes
     )
     {
         size_t bytesRead = 0;
-        // std::vector<uint8_t> buf;
-        for (;;)
+       
+        ssize_t ret = ::read(GetSocketId(), msg.data() + bytesRead, ClientSocket::MAX_READ_SIZE);
+        std::cout << "server sent : " << ret << " bytes" <<std::endl; 
+        if (ret == -1)
         {
-            ssize_t ret = ::read(GetSocketId(), msg.data() + bytesRead, ClientSocket::MAX_READ_SIZE);
-            if (ret == -1)
-            {
-                std::string err = "GetMessage error in ClientSocket - ";
-                err += strerror(errno);
-                throw std::runtime_error(err);
-            }
-            else if (ret == 0)
-            {
-                break;
-            }
-            bytesRead += static_cast<size_t>(ret);
+            std::string err = "GetMessage error in ClientSocket - ";
+            err += strerror(errno);
+            throw std::runtime_error(err);
         }
-
-        // do we need to copy here?
-        // msg.assign(buf.begin(), buf.end());
+        numBytes = ret;
     }
 
     // ServerSocket code
@@ -135,7 +128,7 @@ namespace sockets
         //     throw std::runtime_error(err);
         // }
 
-        m_serverAddr.sin_addr.s_addr = INADDR_LOOPBACK;
+        m_serverAddr.sin_addr.s_addr = INADDR_ANY;
         m_serverAddr.sin_family = AF_INET;
         m_serverAddr.sin_port = htons(port);
 
@@ -172,13 +165,15 @@ namespace sockets
     }
 
     void ServerSocket::BlockingRead(
-        std::vector<uint8_t>& msg
+        int clientFd,
+        std::vector<uint8_t>& msg,
+        int& numBytes
     )
     {
         size_t bytesRead = 0;
         for (;;)
         {
-            ssize_t ret = ::read(GetSocketId(), msg.data() + bytesRead, ServerSocket::MAX_READ_SIZE);
+            ssize_t ret = ::read(clientFd, msg.data() + bytesRead, ServerSocket::MAX_READ_SIZE);
             if (ret == -1)
             {
                 std::string err = "BlockingRead error in ServerSocket - ";
@@ -194,6 +189,7 @@ namespace sockets
     }
 
     void ServerSocket::BlockingWrite(
+        int clientFd,
         const std::vector<uint8_t>& msg
     )
     {
@@ -201,7 +197,7 @@ namespace sockets
 
         while (bytesWritten < msg.size())
         {
-            ssize_t ret = ::write(GetSocketId(), msg.data() + bytesWritten, msg.size() - bytesWritten);
+            ssize_t ret = ::write(clientFd, msg.data() + bytesWritten, msg.size() - bytesWritten);
             if (ret == -1)
             {
                 std::string err = "BlockingWrite error in ServerSocket - ";

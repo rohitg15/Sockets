@@ -7,14 +7,15 @@ int main(int argc, char *argv[])
     std::string hostname = "127.0.0.1";
     std::vector<uint8_t> msg = {0x0A, 0x0B, 0x0C, 0x0D};
     std::vector<uint8_t> readMsg;
-    int port = 8080;
+    readMsg.resize(1024);
+    int port = 8080, numBytes = 0;
     sockets::ClientSocket clientSocket(hostname, port);
     clientSocket.PutMessage(msg);
-    clientSocket.GetMessage(readMsg);
+    clientSocket.GetMessage(readMsg, numBytes);
     std::cout << "Server :";
-    for (auto const& val : readMsg)
+    for (int i = 0; i < numBytes; ++i)
     {
-        std::cout << std::hex << val << " ";
+        std::cout << (int)(readMsg[i]) << " ";
     }
     std::cout << std::endl;
     clientSocket.CloseSocket();

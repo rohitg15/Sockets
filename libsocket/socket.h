@@ -52,7 +52,8 @@ namespace sockets
         );
 
         void GetMessage(
-            std::vector<uint8_t>& msg
+            std::vector<uint8_t>& msg,
+            int& numBytes
         );
 
         void PutMessage(
@@ -77,10 +78,13 @@ namespace sockets
         );
 
         void BlockingRead(
-            std::vector<uint8_t>& msg
+            int clientFd,
+            std::vector<uint8_t>& msg,
+            int& numBytes
         );
 
         void BlockingWrite(
+            int clientFd,
             const std::vector<uint8_t>& msg
         );
 

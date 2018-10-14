@@ -18,12 +18,15 @@ void StateMachine::ListenForever()
         int clientFd = m_pServerSock->Accept((struct sockaddr *)&clientAddr, &clientLen);
         std::vector<uint8_t> writeMsg =  {0x00, 0x01, 0x02, 0x03};
         std::vector<uint8_t> readMsg;
-        m_pServerSock->BlockingWrite(writeMsg);
-        m_pServerSock->BlockingRead(readMsg);
+        readMsg.resize(1024);
+        m_pServerSock->BlockingWrite(clientFd, writeMsg);
+
+        int numBytes = 0;
+        m_pServerSock->BlockingRead(clientFd, readMsg, numBytes);
         std::cout << "Client : ";
-        for(auto const& val : readMsg)
+        for(int i = 0; i < numBytes; ++i)
         {
-            std::cout << std::hex << val << " ";
+            std::cout <<   (int)(readMsg[i]) << " ";
         }
         std::cout << std::endl;
     }
